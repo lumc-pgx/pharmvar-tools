@@ -30,6 +30,7 @@ def worker(args):
 def main():
     parser = argparse.ArgumentParser(description="Calculate all relations of a gene")
     parser.add_argument("--gene", help="Gene to operate on", required=True)
+    parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
     parser.add_argument("--cores", type=int, help="Specify number of cores to run on", default=None)
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
@@ -41,7 +42,11 @@ def main():
         print(f"ERROR: Gene {args.gene} not in configuration!", file=sys.stderr)
         sys.exit(-1)
 
-    ref_seq_id = gene_info["ng_ref_seq_id"]
+    if args.reference == "NG":
+        ref_seq_id = gene_info["ng_ref_seq_id"]
+    else:
+        ref_seq_id = gene_info["nc_ref_seq_id"]
+
     with open(f"data/{ref_seq_id}.fasta", encoding="utf-8") as file:
         reference = fasta_sequence(file.readlines())
 
