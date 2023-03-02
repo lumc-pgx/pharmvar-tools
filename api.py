@@ -51,7 +51,7 @@ def get_alleles(gene, ref_seq_id, version, cache=False):
     response = _cache_requests(f"{PHARMVAR_URI}/genes/{gene}", {
                                    "reference-location-type": "Sequence Start",
                                    "reference-sequence": {ref_seq_id},
-                               }, cache, f"data/pharmvar_alleles_{gene}_{version}_{ref_seq_id}.json")
+                               }, cache, f"data/pharmvar-{version}_{gene}_{ref_seq_id}_alleles.json")
 
     alleles = []
     for allele in response["alleles"]:
@@ -68,5 +68,5 @@ def get_variants(gene, ref_seq_id, version, cache=False):
     response = _cache_requests(f"{PHARMVAR_URI}/variants/gene/{gene}", {
                                    "reference-location-type": "Sequence Start",
                                    "reference-sequence": {ref_seq_id},
-                               }, cache, f"data/pharmvar_variants_{gene}_{version}_{ref_seq_id}.json")
+                               }, cache, f"data/pharmvar-{version}_{gene}_{ref_seq_id}_variants.json")
     return _to_variants(response, ref_seq_id)
