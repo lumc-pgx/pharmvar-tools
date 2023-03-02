@@ -17,6 +17,10 @@ ctx_worker_alleles = {}
 ctx_worker_reference = ""
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def worker(args):
     lhs, rhs = args
     relation = compare(ctx_worker_reference, ctx_worker_alleles[lhs], ctx_worker_alleles[rhs])
@@ -49,16 +53,22 @@ def main():
     ctx_worker_reference = reference
 
     for allele in alleles:
-        allele_variants = [parse_hgvs(var["hgvs"], reference)[0] for var in allele["variants"]]
-        observed = patch(reference, allele_variants)
-        spanning = spanning_variant(reference, observed, allele_variants)
-        supremal = find_supremal(reference, spanning)
-        ctx_worker_alleles[allele["name"]] = supremal
+        try:
+            allele_variants = [parse_hgvs(var["hgvs"], reference)[0] for var in allele["variants"]]
+            observed = patch(reference, allele_variants)
+            spanning = spanning_variant(reference, observed, allele_variants)
+            supremal = find_supremal(reference, spanning)
+            ctx_worker_alleles[allele["name"]] = supremal
+        except ValueError as e:
+            eprint(f"ERROR: allele {allele['name']} - {e}")
 
     for variant in variants:
-        allele = parse_hgvs(variant["hgvs"], reference)
-        supremal = find_supremal(reference, allele[0])
-        ctx_worker_alleles[f"variant_{variant['id']}"] = supremal
+        try:
+            allele = parse_hgvs(variant["hgvs"], reference)
+            supremal = find_supremal(reference, allele[0])
+            ctx_worker_alleles[f"variant_{variant['id']}"] = supremal
+        except ValueError as e:
+            eprint(f"ERROR: variant {variant['hgvs']} - {e}")
 
     with Pool(args.cores) as pool:
         relations = pool.map(worker, combinations(ctx_worker_alleles, 2))
