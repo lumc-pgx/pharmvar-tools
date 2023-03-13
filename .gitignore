@@ -2,5 +2,6 @@ data/*
 !data/*.yaml
 
 venv/
+env/
 
 __pycache__/

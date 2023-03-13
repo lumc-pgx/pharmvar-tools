@@ -2,11 +2,35 @@
 
 Set of tools to work with pharmvar data.
 
-# Installation
+# Installation (Linux)
 
-`python3 -m venv`
-`source venv/bin/activate`
-`pip install -r requirements.txt`
+```sh
+python3 -m venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+# Installation (Windows)
+
+1. Install Windows subsystem for Linux (WSL).
+
+```sh
+wsl --install
+```
+
+2. Navigate to the repository and install the Linux/Python dependencies.
+
+```sh
+cd /mnt/c/[path]/pharmvar-tools
+
+sudo apt update
+sudo apt upgrade
+apt install python3.10-venv, python-is-python3, python3-pip
+
+sudo python -m venv
+source ./venv/bin/activate
+python -m pip -r requirements.txt
+```
 
 # Data requirements
 
