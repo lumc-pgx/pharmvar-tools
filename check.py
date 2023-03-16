@@ -6,7 +6,7 @@ import sys
 from algebra import Relation, are_equivalent, compare
 from algebra.relations.sequence_based import are_equivalent as are_equivalent_sequence
 from algebra.utils import fasta_sequence, vcf_variant
-from algebra.variants import Variant, parse_hgvs, patch
+from algebra.variants import Variant, parse_hgvs, patch, reverse_complement
 from ratelimiter import RateLimiter
 
 from api import get_alleles, get_variants, get_version
@@ -132,8 +132,8 @@ def check_hgvs_allele_vs_fasta(reference, ref_seq_id, alleles, gene, version):
     for allele in alleles:
         try:
             hgvs_var = parse_hgvs(allele["hgvs"], reference)
-        except ValueError:
-            print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed")
+        except ValueError as error:
+            print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed ({str(error)})")
             continue
 
         if not are_equivalent_sequence(reference, patch(reference, hgvs_var), fasta_alleles[allele["name"]]):
@@ -145,8 +145,8 @@ def check_hgvs_allele_vs_vcf(gene, reference, ref_seq_id, alleles, version):
     for allele in alleles:
         try:
             hgvs_var = parse_hgvs(allele["hgvs"], reference)
-        except ValueError:
-            print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed")
+        except ValueError as error:
+            print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed ({str(error)})")
             continue
 
         vcf_variants = []
@@ -157,6 +157,30 @@ def check_hgvs_allele_vs_vcf(gene, reference, ref_seq_id, alleles, version):
 
         if hgvs_var != vcf_variants and not are_equivalent(reference, hgvs_var, vcf_variants):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs {vcf_variants} ({allele['name']})")
+
+
+def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
+    print(f"Checking consistency between NC and NG ...")
+    nc_mapped = nc_reference[mapping["start"]:mapping["end"]]
+
+    for nc_allele in nc_alleles:
+        for ng_allele in ng_alleles:
+            if nc_allele["name"] == ng_allele["name"]:
+                try:
+                    nc_variants = [parse_hgvs(variant["hgvs"], nc_reference)[0] for variant in nc_allele["variants"]]
+                    ng_variants = [parse_hgvs(variant["hgvs"], ng_reference)[0] for variant in ng_allele["variants"]]
+
+                    nc_observed = patch(nc_mapped, [Variant(variant.start - mapping["start"], variant.end - mapping["start"], variant.sequence) for variant in nc_variants])
+                    if mapping["reverse"]:
+                        nc_observed = reverse_complement(nc_observed)
+                    ng_observed = patch(ng_reference, ng_variants)
+                except ValueError:
+                    # silently skip parsing/interpretation related problems checked elsewhere
+                    break
+
+                if nc_observed != ng_observed:
+                    print(f"NC is not consistent with NG for {nc_allele['name']}")
+                break
 
 
 def main():
@@ -170,6 +194,7 @@ def main():
     parser.add_argument("--hgvs", help="Check allele hgvs entry vs. variant list", action="store_true")
     parser.add_argument("--fasta", help="Check hgvs entry of allele vs. fasta files", action="store_true")
     parser.add_argument("--vcf", help="Check hgvs entry of allele vs. vcf files", action="store_true")
+    parser.add_argument("--nc-vs-ng", help="Check NC variants vs. NG variants", action="store_true")
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
     parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
@@ -227,6 +252,9 @@ def main():
         check_hgvs_allele_vs_fasta(ng_reference, ng_ref_seq_id, ng_alleles, args.gene, args.version)
     if args.vcf or args.all:
         check_hgvs_allele_vs_vcf(args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
+
+    if args.nc_vs_ng or args.all:
+        check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, gene_info["nc_mapping"])
 
 
 if __name__ == "__main__":
