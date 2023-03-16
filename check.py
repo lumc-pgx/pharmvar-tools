@@ -140,8 +140,8 @@ def check_hgvs_allele_vs_fasta(reference, ref_seq_id, alleles, gene, version):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs fasta ({allele['name']})")
 
 
-def check_hgvs_allele_vs_vcf(gene, reference, ref_seq_id, alleles, version):
-    print(f"Checking consistency between allele hgvs and vcf for {ref_seq_id} ...")
+def check_hgvs_allele_vs_vcf_ng(gene, reference, ref_seq_id, alleles, version):
+    print(f"Checking consistency between allele hgvs and NG vcf for {ref_seq_id} ...")
     for allele in alleles:
         try:
             hgvs_var = parse_hgvs(allele["hgvs"], reference)
@@ -157,6 +157,29 @@ def check_hgvs_allele_vs_vcf(gene, reference, ref_seq_id, alleles, version):
 
         if hgvs_var != vcf_variants and not are_equivalent(reference, hgvs_var, vcf_variants):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs {vcf_variants} ({allele['name']})")
+
+
+def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
+    print(f"Checking consistency between NC variants and NC vcf for {ref_seq_id} ...")
+    for allele in alleles:
+        try:
+            hgvs_var = [parse_hgvs(variant["hgvs"], reference)[0] for variant in allele["variants"]]
+        except ValueError as error:
+            print(f"Parsing of {allele['name']} failed ({str(error)})")
+            continue
+
+        vcf_variants = []
+        with open(f"data/pharmvar-{version}/{gene}/GRCh38/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8") as file:
+            for line in file:
+                if not line.startswith("#"):
+                    vcf_variants.append(vcf_variant(line))
+
+        try:
+            if hgvs_var != vcf_variants and not are_equivalent(reference, hgvs_var, vcf_variants):
+                print(f"Non equivalent variants for {allele['name']}: {hgvs_var} vs {vcf_variants}")
+        except ValueError:
+            # silently skip parsing/interpretation related problems checked elsewhere
+            pass
 
 
 def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
@@ -180,6 +203,8 @@ def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
 
                 if nc_observed != ng_observed:
                     print(f"NC is not consistent with NG for {nc_allele['name']}")
+                    print(nc_variants)
+                    print(ng_variants)
                 break
 
 
@@ -251,7 +276,8 @@ def main():
     if args.fasta or args.all:
         check_hgvs_allele_vs_fasta(ng_reference, ng_ref_seq_id, ng_alleles, args.gene, args.version)
     if args.vcf or args.all:
-        check_hgvs_allele_vs_vcf(args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
+        check_hgvs_allele_vs_vcf_nc(args.gene, nc_reference, nc_ref_seq_id, nc_alleles, args.version)
+        check_hgvs_allele_vs_vcf_ng(args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
 
     if args.nc_vs_ng or args.all:
         check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, gene_info["nc_mapping"])
