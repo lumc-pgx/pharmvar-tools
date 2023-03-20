@@ -25,11 +25,11 @@ cd /mnt/c/[path]/pharmvar-tools
 
 sudo apt update
 sudo apt upgrade
-apt install python3.10-venv, python-is-python3, python3-pip
+sudo apt install python3.10-venv python-is-python3 python3-pip
 
-sudo python -m venv
+sudo python -m venv venv
 source ./venv/bin/activate
-python -m pip -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 # Data requirements
