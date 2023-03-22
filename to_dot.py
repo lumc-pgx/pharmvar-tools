@@ -179,6 +179,7 @@ def main():
     parser.add_argument("--context", help="File with contextual nodes")
     parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
+    parser.add_argument("--text", help="Output simplified relations as text instead of as an image", default=False, type=bool)
 
     args = parser.parse_args()
 
@@ -190,7 +191,15 @@ def main():
             context = set(file.read().splitlines())
 
     relations = read_relations(sys.stdin)
-    write_dot(*prepare4dot(*simplify(relations, context), nodes, context))
+    
+    if args.text: # Output as text
+        graphs = simplify(relations, context)
+        relations = (Relation.EQUIVALENT, Relation.IS_CONTAINED, Relation.OVERLAP)
+        for graph,relation in zip(graphs, relations):
+            for left, right in graph.edges():
+                print(f"{left} {right} {relation.value}")
+    else: # Output as image
+        write_dot(*prepare4dot(*simplify(relations, context), nodes, context))
 
 
 if __name__ == "__main__":
