@@ -211,6 +211,7 @@ def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
 def main():
     parser = argparse.ArgumentParser(description="PharmVar data checker")
     parser.add_argument("--all", help="Perform all checks", action="store_true")
+    parser.add_argument("--local", help="Perform all local checks", action="store_true")
     parser.add_argument("--alleles-vs-variants", help="Check allele vs. variant endpoints", action="store_true")
     parser.add_argument("--ncbi", help="Check variants against NCBI", action="store_true")
     parser.add_argument("--mutalyzer", help="Check variants against Mutalyzer", action="store_true")
@@ -250,7 +251,7 @@ def main():
     nc_alleles = get_alleles(args.gene, nc_ref_seq_id, args.version, cache)
     ng_alleles = get_alleles(args.gene, ng_ref_seq_id, args.version, cache)
 
-    if args.alleles_vs_variants or args.all:
+    if args.alleles_vs_variants or args.all or args.local:
         check_alleles_vs_variants(nc_alleles, nc_variants, nc_ref_seq_id)
         check_alleles_vs_variants(ng_alleles, ng_variants, ng_ref_seq_id)
 
@@ -262,24 +263,24 @@ def main():
         check_variants_with_mutalyzer(nc_reference, nc_ref_seq_id, nc_variants)
         check_variants_with_mutalyzer(ng_reference, ng_ref_seq_id, ng_variants)
 
-    if args.variants or args.all:
+    if args.variants or args.all or args.local:
         check_allele_variants(ng_reference, ng_ref_seq_id, ng_alleles)
         check_allele_variants(nc_reference, nc_ref_seq_id, nc_alleles)
 
-    if args.duplicates or args.all:
+    if args.duplicates or args.all or args.local:
         check_allele_duplicates(nc_reference, nc_ref_seq_id, nc_alleles)
         check_allele_duplicates(ng_reference, ng_ref_seq_id, ng_alleles)
 
     # Only for NG, as Allele["hgvs"] is always expressed as NG
-    if args.hgvs or args.all:
+    if args.hgvs or args.all or args.local:
         check_hgvs_allele_vs_variant_list(ng_reference, ng_ref_seq_id, ng_alleles)
-    if args.fasta or args.all:
+    if args.fasta or args.all or args.local:
         check_hgvs_allele_vs_fasta(ng_reference, ng_ref_seq_id, ng_alleles, args.gene, args.version)
-    if args.vcf or args.all:
+    if args.vcf or args.all or args.local:
         check_hgvs_allele_vs_vcf_nc(args.gene, nc_reference, nc_ref_seq_id, nc_alleles, args.version)
         check_hgvs_allele_vs_vcf_ng(args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
 
-    if args.nc_vs_ng or args.all:
+    if args.nc_vs_ng or args.all or args.local:
         check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, gene_info["nc_mapping"])
 
 
