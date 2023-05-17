@@ -125,15 +125,13 @@ def export_relations(graph, predicate):
     return relations
 
 
-def select_context(equivalent, containment, overlap, context, descendants=False):
+def select_context(equivalent, containment, overlap, context):
     nodes = set(context)
     for node in context:
-        if node in equivalent.nodes():
-            nodes.update(list(nx.node_connected_component(equivalent, node)))
+        # TODO: no containment if there is already equivalence?
         if node in containment.nodes():
             nodes.update(list(nx.ancestors(containment, node)))
-            if descendants:
-                nodes.update(list(nx.descendants(containment, node)))
+        # TODO: no overlap if there is already containment or equivalence?
         if node in overlap.nodes():
             nodes.update(list(overlap.neighbors(node)))
 
