@@ -184,7 +184,7 @@ def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
 
 def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
     print(f"Checking consistency between NC and NG ...")
-    nc_mapped = nc_reference[mapping["start"]:mapping["end"]]
+    nc_mapped = nc_reference[mapping["start"] - 1:mapping["end"]]
 
     for nc_allele in nc_alleles:
         for ng_allele in ng_alleles:
@@ -193,7 +193,7 @@ def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
                     nc_variants = [parse_hgvs(variant["hgvs"], nc_reference)[0] for variant in nc_allele["variants"]]
                     ng_variants = [parse_hgvs(variant["hgvs"], ng_reference)[0] for variant in ng_allele["variants"]]
 
-                    nc_observed = patch(nc_mapped, [Variant(variant.start - mapping["start"], variant.end - mapping["start"], variant.sequence) for variant in nc_variants])
+                    nc_observed = patch(nc_mapped, [Variant(variant.start - mapping["start"] + 1, variant.end - mapping["start"] + 1, variant.sequence) for variant in nc_variants])
                     if mapping["reverse"]:
                         nc_observed = reverse_complement(nc_observed)
                     ng_observed = patch(ng_reference, ng_variants)
