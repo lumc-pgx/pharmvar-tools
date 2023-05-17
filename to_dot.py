@@ -175,12 +175,24 @@ def main():
     parser = argparse.ArgumentParser(description="Create Graphviz dot file of relations")
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--context", help="File with contextual nodes")
+    parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
 
     args = parser.parse_args()
 
-    nodes = config.get_nodes(args.gene, args.version, not args.disable_cache)
+    try:
+        gene_info = config.get_gene(args.gene)
+    except KeyError:
+        print(f"ERROR: Gene {args.gene} not in configuration!", file=sys.stderr)
+        sys.exit(-1)
+
+    if args.reference == "NG":
+        ref_seq_id = gene_info["ng_ref_seq_id"]
+    else:
+        ref_seq_id = gene_info["nc_ref_seq_id"]
+
+    nodes = config.get_nodes(args.gene, args.version, not args.disable_cache, ref_seq_id)
 
     context = set()
     if args.context:

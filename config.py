@@ -35,16 +35,16 @@ def impact_to_color(impact):
     return function_to_color("function not assigned")
 
 
-def get_nodes(gene, version, cache):
+def get_nodes(gene, version, cache, ref_seq_id):
     nodes = {}
 
     nodes.update({f"variant_{variant['id']}": {
         "color": impact_to_color(variant["impact"]),
         "label": variant["hgvs"],
-    } for variant in get_variants(gene, get_gene(gene)["nc_ref_seq_id"], version, cache)})
+    } for variant in get_variants(gene, ref_seq_id, version, cache)})
 
     nodes.update({allele["name"]: {
         "color": function_to_color(allele["function"]),
         "label": allele["name"],
-    } for allele in get_alleles(gene, get_gene(gene)["nc_ref_seq_id"], version, cache)})
+    } for allele in get_alleles(gene, ref_seq_id, version, cache)})
     return nodes
