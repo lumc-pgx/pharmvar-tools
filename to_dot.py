@@ -176,10 +176,13 @@ def main():
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--context", help="File with contextual nodes")
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
-    parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
+    parser.add_argument("--version", help="Specify PharmVar version")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
 
     args = parser.parse_args()
+
+    if not args.version:
+        args.version = get_version()
 
     try:
         gene_info = config.get_gene(args.gene)
