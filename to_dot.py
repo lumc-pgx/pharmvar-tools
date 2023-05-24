@@ -134,7 +134,7 @@ def simplify(relations, context=None):
     overlap = most_specific_overlap(containment, overlap)
 
     if context:
-        equivalent, containment, overlap = select_context(equivalent, containment, overlap, context)
+        return select_context(equivalent, containment, overlap, context)
 
     return equivalent, containment, overlap
 
@@ -149,7 +149,7 @@ def export_relations(graph, value):
 def prepare4export(equivalent, containment, overlap, nodes, context):
     for node in context:
         if node not in nodes:
-            nodes[node] = {}
+            nodes[node] = {"shape": "box"}
 
     return (export_relations(equivalent, Relation.EQUIVALENT.value) +
             export_relations(containment, Relation.IS_CONTAINED.value) +
