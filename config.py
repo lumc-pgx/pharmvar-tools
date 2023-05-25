@@ -41,10 +41,12 @@ def get_nodes(gene, version, cache, ref_seq_id):
     nodes.update({f"variant_{variant['id']}": {
         "color": impact_to_color(variant["impact"]),
         "label": variant["hgvs"],
+        "shape": "oval",
     } for variant in get_variants(gene, ref_seq_id, version, cache)})
 
     nodes.update({allele["name"]: {
         "color": function_to_color(allele["function"]),
         "label": allele["name"],
+        "shape": "oval",
     } for allele in get_alleles(gene, ref_seq_id, version, cache)})
     return nodes
