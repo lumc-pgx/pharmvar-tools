@@ -12,8 +12,11 @@ import config
 def read_relations(file=sys.stdin):
     relations = []
     for line in file.readlines():
-        lhs, rhs, value, *_ = line.split()
-        relations.append((lhs, rhs, value))
+        lhs, rhs, value, *remainder = line.split()
+        homo = 0
+        if len(remainder) >= 1:
+            homo = int(remainder[0])
+        relations.append((lhs, rhs, value, homo))
     return relations
 
 
@@ -52,8 +55,12 @@ def build_graphs(relations):
     equivalent = nx.Graph()
     containment = nx.DiGraph()
     overlap = nx.Graph()
+    nodes = {}
     for relation in relations:
-        lhs, rhs, value = relation
+        lhs, rhs, value, homo = relation
+        # Assume the homozygous node is RHS
+        if homo:
+            nodes.update({rhs: {"peripheries": 2}})
         if value == Relation.EQUIVALENT.value:
             equivalent.add_edge(lhs, rhs)
         elif value == Relation.IS_CONTAINED.value:
@@ -64,7 +71,7 @@ def build_graphs(relations):
             overlap.add_edge(lhs, rhs)
         elif value != Relation.DISJOINT.value:
             raise ValueError(f"unknown relation: {value}")
-    return equivalent, containment, overlap
+    return equivalent, containment, overlap, nodes
 
 
 def contract_equivalent(equivalent, containment, overlap):
@@ -127,7 +134,7 @@ def select_context(equivalent, containment, overlap, context):
 
 
 def simplify(relations, context=None):
-    equivalent, containment, overlap = build_graphs(relations)
+    equivalent, containment, overlap, nodes = build_graphs(relations)
     equivalent, containment, overlap = contract_equivalent(equivalent, containment, overlap)
     containment = nx.transitive_reduction(containment)
     overlap = overlap_without_common_ancestor(containment, overlap)
@@ -136,7 +143,7 @@ def simplify(relations, context=None):
     if context:
         equivalent, containment, overlap = select_context(equivalent, containment, overlap, context)
 
-    return equivalent, containment, overlap
+    return equivalent, containment, overlap, nodes
 
 
 def export_relations(graph, value):
@@ -146,15 +153,21 @@ def export_relations(graph, value):
     return relations
 
 
-def prepare4export(equivalent, containment, overlap, nodes, context):
+def prepare4export(equivalent, containment, overlap, homo_nodes, config_nodes, context):
     for node in context:
-        if node not in nodes:
-            nodes[node] = {}
+        if node not in config_nodes:
+            config_nodes[node] = {"shape": "box"}
+
+    for node in homo_nodes:
+        if node not in config_nodes:
+            config_nodes[node] = homo_nodes[node]
+        else:
+            config_nodes[node].update(homo_nodes[node])
 
     return (export_relations(equivalent, Relation.EQUIVALENT.value) +
             export_relations(containment, Relation.IS_CONTAINED.value) +
             export_relations(overlap, Relation.OVERLAP.value),
-            {node: nodes[node] for node in nodes if node in
+            {node: config_nodes[node] for node in config_nodes if node in
                 list(equivalent.nodes()) +
                 list(containment.nodes()) +
                 list(overlap.nodes()) +
@@ -186,8 +199,8 @@ def main():
     else:
         ref_seq_id = gene_info["nc_ref_seq_id"]
 
-    nodes = config.get_nodes(args.gene, args.version, not args.disable_cache, ref_seq_id)
-    relations, nodes = prepare4export(*simplify(read_relations(), args.context), nodes, args.context)
+    config_nodes = config.get_nodes(args.gene, args.version, not args.disable_cache, ref_seq_id)
+    relations, nodes = prepare4export(*simplify(read_relations(), args.context), config_nodes, args.context)
 
     if args.text:
         for lhs, rhs, value in relations:
