@@ -143,7 +143,13 @@ def check_hgvs_allele_vs_fasta(reference, ref_seq_id, alleles, gene, version):
             print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed ({str(error)})")
             continue
 
-        if not are_equivalent_sequence(reference, patch(reference, hgvs_var), fasta_alleles[allele["name"]]):
+        try:
+            fasta_allele = fasta_alleles[allele["name"]]
+        except KeyError:
+            print(f"Fasta sequence not found for {allele['name']}")
+            continue
+
+        if not are_equivalent_sequence(reference, patch(reference, hgvs_var), fasta_allele):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs fasta ({allele['name']})")
 
 
@@ -157,10 +163,15 @@ def check_hgvs_allele_vs_vcf_ng(gene, reference, ref_seq_id, alleles, version):
             continue
 
         vcf_variants = []
-        with open(f"data/pharmvar-{version}/{gene}/RefSeqGene/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8") as file:
+        try:
+            file = open(f"data/pharmvar-{version}/{gene}/RefSeqGene/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8")
             for line in file:
                 if not line.startswith("#"):
                     vcf_variants.append(vcf_variant(line))
+            file.close()
+        except FileNotFoundError:
+            print(f"VCF file not found for {allele['name']}")
+            continue
 
         if hgvs_var != vcf_variants and not are_equivalent(reference, hgvs_var, vcf_variants):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs {vcf_variants} ({allele['name']})")
@@ -176,10 +187,15 @@ def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
             continue
 
         vcf_variants = []
-        with open(f"data/pharmvar-{version}/{gene}/GRCh38/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8") as file:
+        try:
+            file = open(f"data/pharmvar-{version}/{gene}/GRCh38/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8")
             for line in file:
                 if not line.startswith("#"):
                     vcf_variants.append(vcf_variant(line))
+            file.close()
+        except FileNotFoundError:
+            print(f"VCF file not found for {allele['name']}")
+            continue
 
         try:
             if hgvs_var != vcf_variants and not are_equivalent(reference, hgvs_var, vcf_variants):
