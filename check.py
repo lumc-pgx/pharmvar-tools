@@ -17,6 +17,13 @@ NCBI_URI = "https://api.ncbi.nlm.nih.gov/variation/v0"
 MUTALYZER_URI = "https://mutalyzer.nl/api"
 
 
+def allele_from_variants(reference, variants):
+    allele = []
+    for variant in variants:
+        allele.extend(parse_hgvs(variant["hgvs"], reference))
+    return allele
+
+
 def mutalyzer_hgvs(query):
     response = requests.get(f"{MUTALYZER_URI}/normalize/{query}")
     if response.status_code == 200:
@@ -79,7 +86,7 @@ def check_hgvs_allele_vs_variant_list(reference, ref_seq_id, alleles):
             print(f"Parsing of {allele['hgvs']} ({allele['name']}) failed ({str(error)})")
             continue
 
-        variants = [parse_hgvs(variant["hgvs"], reference)[0] for variant in allele["variants"]]
+        variants = allele_from_variants(reference, allele["variants"])
 
         if hgvs_var != sorted(variants):
             print(f"HGVS variant {allele['hgvs']} mismatches with variant list ({allele['name']})")
@@ -88,7 +95,7 @@ def check_hgvs_allele_vs_variant_list(reference, ref_seq_id, alleles):
 def check_allele_variants(reference, ref_seq_id, alleles):
     print(f"Checking consistency of 'variants' entries of alleles for {ref_seq_id} ...")
     for allele in alleles:
-        variants = set([parse_hgvs(variant["hgvs"], reference)[0] for variant in allele["variants"]])
+        variants = set(allele_from_variants(reference, allele["variants"]))
         try:
             list(sorted(variants))
         except ValueError:
@@ -103,7 +110,7 @@ def check_allele_variants(reference, ref_seq_id, alleles):
 def check_allele_duplicates(reference, ref_seq_id, alleles):
     print(f"Checking for duplicates in 'variants' entries of alleles for {ref_seq_id} ...")
     for allele in alleles:
-        variants = [parse_hgvs(variant["hgvs"], reference)[0] for variant in allele["variants"]]
+        variants = allele_from_variants(reference, allele["variants"])
         for duplicate in set([variant for variant in variants if variants.count(variant) > 1]):
             print(f"Duplicate {ref_seq_id}:g.{duplicate.to_hgvs(reference)} in {allele['name']}")
 
@@ -163,7 +170,7 @@ def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
     print(f"Checking consistency between NC variants and NC vcf for {ref_seq_id} ...")
     for allele in alleles:
         try:
-            hgvs_var = [parse_hgvs(variant["hgvs"], reference)[0] for variant in allele["variants"]]
+            hgvs_var = allele_from_variants(reference, allele["variants"])
         except ValueError as error:
             print(f"Parsing of {allele['name']} failed ({str(error)})")
             continue
@@ -190,8 +197,8 @@ def check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, mapping):
         for ng_allele in ng_alleles:
             if nc_allele["name"] == ng_allele["name"]:
                 try:
-                    nc_variants = [parse_hgvs(variant["hgvs"], nc_reference)[0] for variant in nc_allele["variants"]]
-                    ng_variants = [parse_hgvs(variant["hgvs"], ng_reference)[0] for variant in ng_allele["variants"]]
+                    nc_variants = allele_from_variants(nc_reference, nc_allele["variants"])
+                    ng_variants = allele_from_variants(ng_reference, ng_allele["variants"])
 
                     nc_observed = patch(nc_mapped, [Variant(variant.start - mapping["start"] + 1, variant.end - mapping["start"] + 1, variant.sequence) for variant in nc_variants])
                     if mapping["reverse"]:
