@@ -59,6 +59,9 @@ def get_alleles(gene, ref_seq_id, version, cache=False):
 
     alleles = []
     for allele in response["alleles"]:
+        if allele["description"]:
+            # TODO: how to pass this information down?
+            continue
         alleles.append({
             "function": allele["function"],
             "hgvs": _remove_prefix(allele["hgvs"], f"{ref_seq_id}:g."),
