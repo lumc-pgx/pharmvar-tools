@@ -21,6 +21,10 @@ def _remove_prefix(text, prefix):
 def _to_variants(data, ref_seq_id=""):
     variants = []
     for variant in data:
+        # TODO: convert to Variant object?
+        if "=" in variant["hgvs"]:
+            # TODO: how to pass this information down?
+            continue
         variants.append({
             "hgvs": _remove_prefix(variant["hgvs"], f"{ref_seq_id}:g."),
             "id": variant["variantId"],
