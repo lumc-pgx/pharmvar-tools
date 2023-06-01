@@ -1,6 +1,7 @@
 CYP2D6:
     nc_ref_seq_id: NC_000022.11
     ng_ref_seq_id: NG_008376.4
+    wildtype: CYP2D6*1
     nc_mapping:
         start: 42124499
         end: 42135810
