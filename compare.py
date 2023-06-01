@@ -9,6 +9,7 @@ from algebra.utils import fasta_sequence
 from algebra.variants import parse_hgvs, patch
 
 from api import get_alleles, get_variants, get_version
+from check import allele_from_variants
 from config import get_gene
 
 
@@ -59,7 +60,7 @@ def main():
 
     for allele in alleles:
         try:
-            allele_variants = [parse_hgvs(var["hgvs"], reference)[0] for var in allele["variants"]]
+            allele_variants = allele_from_variants(reference, allele["variants"])
             observed = patch(reference, allele_variants)
             spanning = spanning_variant(reference, observed, allele_variants)
             supremal = find_supremal(reference, spanning)
