@@ -66,7 +66,7 @@ def main():
             allele_variants = allele_from_variants(reference, allele["variants"])
             observed = patch(reference, allele_variants)
             spanning = spanning_variant(reference, observed, allele_variants)
-            supremal = find_supremal(reference, spanning)
+            supremal, *_ = find_supremal(reference, spanning)
             ctx_worker_alleles[allele["name"]] = supremal
         except ValueError as e:
             eprint(f"ERROR: allele {allele['name']} - {e}")
@@ -74,7 +74,7 @@ def main():
     for variant in variants:
         try:
             allele = parse_hgvs(variant["hgvs"], reference)
-            supremal = find_supremal(reference, allele[0])
+            supremal, *_ = find_supremal(reference, allele[0])
             ctx_worker_alleles[f"variant_{variant['id']}"] = supremal
         except ValueError as e:
             eprint(f"ERROR: variant {variant['hgvs']} - {e}")
