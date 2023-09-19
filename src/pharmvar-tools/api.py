@@ -62,12 +62,22 @@ def get_alleles(gene, ref_seq_id, version, cache=False):
         if allele["description"]:
             # TODO: how to pass this information down?
             continue
-        alleles.append({
+        entry = {
             "function": allele["function"],
-            "hgvs": _remove_prefix(allele["hgvs"], f"{ref_seq_id}:g."),
             "name": allele["alleleName"],
             "variants": _to_variants(allele["variants"], ref_seq_id),
-        })
+        }
+        if ref_seq_id.startswith("NG"):
+            entry["hgvs"] = _remove_prefix(allele["hgvs"], f"{ref_seq_id}:g.")
+        else:
+            hgvs = [_remove_prefix(variant["hgvs"], f"{ref_seq_id}:g.") for variant in allele["variants"] if '=' not in variant["hgvs"]]
+            if len(hgvs) > 0:
+                entry["hgvs"] = f"[{';'.join(hgvs)}]"
+            else:
+                entry["hgvs"] = "="
+
+        alleles.append(entry)
+
     return alleles
 
 
