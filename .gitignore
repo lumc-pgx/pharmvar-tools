@@ -1,6 +1,9 @@
 data/*
 !data/*.yaml
+plots/
 
 venv/
 
 __pycache__/
+
+.idea/
