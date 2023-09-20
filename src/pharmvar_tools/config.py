@@ -1,6 +1,6 @@
 import yaml
 
-from api import get_alleles, get_variants
+from .api import get_alleles, get_variants
 
 
 _GENES = None

@@ -5,8 +5,8 @@ import sys
 from algebra import Relation
 import networkx as nx
 
-from api import get_version
-import config
+from .api import get_version
+from . import config
 
 
 def read_relations(file=sys.stdin):
