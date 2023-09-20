@@ -246,9 +246,12 @@ def main():
     parser.add_argument("--nc-vs-ng", help="Check NC variants vs. NG variants", action="store_true")
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
-    parser.add_argument("--version", help="Specify PharmVar version", default=get_version())
+    parser.add_argument("--version", help="Specify PharmVar version")
 
     args = parser.parse_args()
+
+    if not args.version:
+        args.version = get_version()
 
     try:
         gene_info = get_gene(args.gene)
