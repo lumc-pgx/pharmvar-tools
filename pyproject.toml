@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pharmvar_tools"
+version = "0.0.1"
+authors = [
+  { name="Mark Santcroos", email="m.a.santcroos@lumc.nl" },
+  { name="Jonathan K. Vis", email="j.k.vis@lumc.nl" },
+]
+description = "Python tools to work with Pharmvar data."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/lumc-pgx/pharmvar-tools"
+"Bug Tracker" = "https://github.com/lumc-pgx/pharmvar-tools/issues"
