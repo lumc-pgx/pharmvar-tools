@@ -180,7 +180,7 @@ def main():
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
-    parser.add_argument("--context", nargs='*', help="List of contextual nodes")
+    parser.add_argument("--context", nargs='*', help="List of contextual nodes", default=[])
     parser.add_argument("--text", help="Plain text output", action="store_true")
 
     args = parser.parse_args()
