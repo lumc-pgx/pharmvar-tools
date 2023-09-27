@@ -9,8 +9,8 @@ from algebra.utils import fasta_sequence, vcf_variant
 from algebra.variants import Variant, parse_hgvs, patch, reverse_complement
 from ratelimiter import RateLimiter
 
-from api import get_alleles, get_variants, get_version
-from config import get_gene
+from .api import get_alleles, get_variants, get_version
+from .config import get_gene
 
 
 NCBI_URI = "https://api.ncbi.nlm.nih.gov/variation/v0"

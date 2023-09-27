@@ -8,9 +8,9 @@ from algebra.relations.supremal_based import compare, find_supremal, spanning_va
 from algebra.utils import fasta_sequence
 from algebra.variants import parse_hgvs, patch
 
-from api import get_alleles, get_variants, get_version
-from check import allele_from_variants
-from config import get_gene
+from .api import get_alleles, get_variants, get_version
+from .check import allele_from_variants
+from .config import get_gene
 
 
 def eprint(*args, **kwargs):
