@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "pharmvar_tools"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
   { name="Mark Santcroos", email="m.a.santcroos@lumc.nl" },
   { name="Jonathan K. Vis", email="j.k.vis@lumc.nl" },
@@ -28,3 +28,11 @@ pharmvar-plot = "pharmvar_tools.to_dot:main"
 [project.urls]
 "Homepage" = "https://github.com/lumc-pgx/pharmvar-tools"
 "Bug Tracker" = "https://github.com/lumc-pgx/pharmvar-tools/issues"
+
+
+[tool.setuptools.package-data]
+pharmvar_tools = ["config/*.yaml"]
+
+
+[project.optional-dependencies]
+dev = ["build", "twine"]
