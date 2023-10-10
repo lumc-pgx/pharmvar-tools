@@ -34,14 +34,14 @@ def _to_variants(data, ref_seq_id=""):
     return variants
 
 
-# TODO: specifying a future version causes problems
-def _cache_requests(url, params, cache, path):
+def _cache_requests(url, params, cache, path, fatal):
     if cache:
         try:
             with open(f"{path}", encoding="utf-8") as file:
                 return json.load(file)
         except FileNotFoundError:
-            pass
+            if fatal:
+                raise
 
     response = requests.get(url, params=params).json()
 
@@ -53,11 +53,17 @@ def _cache_requests(url, params, cache, path):
 
 
 def get_alleles(data_dir, gene, ref_seq_id, version, cache=False):
+    if version:
+        fatal = True
+    else:
+        version = get_version()
+        fatal = False
+
     response = _cache_requests(f"{PHARMVAR_URI}/genes/{gene}", {
                                    "reference-location-type": "Sequence Start",
                                    "reference-sequence": {ref_seq_id},
                                    "include-reference-variants": True,
-                               }, cache, Path(data_dir, f"pharmvar-{version}_{gene}_{ref_seq_id}_alleles.json"))
+                               }, cache, Path(data_dir, f"pharmvar-{version}_{gene}_{ref_seq_id}_alleles.json"), fatal)
 
     alleles = []
     for allele in response["alleles"]:
@@ -84,9 +90,15 @@ def get_alleles(data_dir, gene, ref_seq_id, version, cache=False):
 
 
 def get_variants(data_dir, gene, ref_seq_id, version, cache=False):
+    if version:
+        fatal = True
+    else:
+        version = get_version()
+        fatal = False
+
     response = _cache_requests(f"{PHARMVAR_URI}/variants/gene/{gene}", {
                                    "reference-location-type": "Sequence Start",
                                    "reference-sequence": {ref_seq_id},
                                    "include-reference-variants": True,
-                               }, cache, Path(data_dir, f"pharmvar-{version}_{gene}_{ref_seq_id}_variants.json"))
+                               }, cache, Path(data_dir, f"pharmvar-{version}_{gene}_{ref_seq_id}_variants.json"), fatal)
     return _to_variants(response, ref_seq_id)

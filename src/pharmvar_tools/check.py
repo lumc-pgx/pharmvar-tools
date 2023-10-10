@@ -252,9 +252,6 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.version:
-        args.version = get_version()
-
     try:
         gene_info = get_gene(args.gene)
     except KeyError:
@@ -299,6 +296,9 @@ def main():
     if args.duplicates or args.all or args.local:
         check_allele_duplicates(nc_reference, nc_ref_seq_id, nc_alleles)
         check_allele_duplicates(ng_reference, ng_ref_seq_id, ng_alleles)
+
+    if not args.version:
+        args.version = get_version()
 
     # Only for NG, as Allele["hgvs"] is always expressed as NG
     if args.hgvs or args.all or args.local:
