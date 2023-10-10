@@ -182,6 +182,7 @@ def main():
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
     parser.add_argument("--context", nargs='*', help="List of contextual nodes", default=[])
     parser.add_argument("--text", help="Plain text output", action="store_true")
+    parser.add_argument("--data-dir", help="Data directory", default="./data")
 
     args = parser.parse_args()
 
@@ -199,7 +200,7 @@ def main():
     else:
         ref_seq_id = gene_info["nc_ref_seq_id"]
 
-    config_nodes = config.get_nodes(args.gene, args.version, not args.disable_cache, ref_seq_id)
+    config_nodes = config.get_nodes(args.data_dir, args.gene, args.version, not args.disable_cache, ref_seq_id)
     relations, nodes = prepare4export(*simplify(read_relations(), args.context), config_nodes, args.context)
 
     if args.text:

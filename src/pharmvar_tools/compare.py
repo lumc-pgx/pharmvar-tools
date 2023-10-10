@@ -1,6 +1,7 @@
 import argparse
 from itertools import combinations
 from multiprocessing import Pool
+from pathlib import Path
 import sys
 
 from algebra import Relation
@@ -35,6 +36,7 @@ def main():
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version")
     parser.add_argument("--cores", type=int, help="Specify number of cores to run on", default=None)
+    parser.add_argument("--data-dir", help="Data directory", default="./data")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
     args = parser.parse_args()
 
@@ -52,11 +54,11 @@ def main():
     else:
         ref_seq_id = gene_info["nc_ref_seq_id"]
 
-    with open(f"data/{ref_seq_id}.fasta", encoding="utf-8") as file:
+    with open(Path(args.data_dir, f"{ref_seq_id}.fasta"), encoding="utf-8") as file:
         reference = fasta_sequence(file.readlines())
 
-    pv_variants = get_variants(args.gene, ref_seq_id, args.version, not args.disable_cache)
-    pv_alleles = get_alleles(args.gene, ref_seq_id, args.version, not args.disable_cache)
+    pv_variants = get_variants(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
+    pv_alleles = get_alleles(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
 
     alleles = {}
     for allele in pv_alleles:

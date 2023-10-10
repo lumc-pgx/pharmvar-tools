@@ -1,5 +1,6 @@
 import argparse
 from itertools import combinations
+from pathlib import Path
 import requests
 import sys
 
@@ -130,10 +131,10 @@ def multi_fasta(lines):
         yield name, sequence
 
 
-def check_hgvs_allele_vs_fasta(reference, ref_seq_id, alleles, gene, version):
+def check_hgvs_allele_vs_fasta(data_dir, reference, ref_seq_id, alleles, gene, version):
     print(f"Checking consistency between allele hgvs and fasta for {ref_seq_id} ...")
     fasta_alleles = {}
-    with open(f"data/pharmvar-{version}/{gene}/{gene}.haplotypes.fasta", encoding="utf-8") as file:
+    with open(Path(data_dir, f"pharmvar-{version}", gene, f"{gene}.haplotypes.fasta"), encoding="utf-8") as file:
         for name, sequence in multi_fasta(file):
             fasta_alleles[name] = sequence
     for allele in alleles:
@@ -153,7 +154,7 @@ def check_hgvs_allele_vs_fasta(reference, ref_seq_id, alleles, gene, version):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs fasta ({allele['name']})")
 
 
-def check_hgvs_allele_vs_vcf_ng(gene, reference, ref_seq_id, alleles, version):
+def check_hgvs_allele_vs_vcf_ng(data_dir, gene, reference, ref_seq_id, alleles, version):
     print(f"Checking consistency between allele hgvs and NG vcf for {ref_seq_id} ...")
     for allele in alleles:
         try:
@@ -164,7 +165,7 @@ def check_hgvs_allele_vs_vcf_ng(gene, reference, ref_seq_id, alleles, version):
 
         vcf_variants = []
         try:
-            file = open(f"data/pharmvar-{version}/{gene}/RefSeqGene/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8")
+            file = open(Path(data_dir, f"pharmvar-{version}", gene, "RefSeqGene", f"{allele['name'].replace('*', '_')}.vcf"), encoding="utf-8")
             for line in file:
                 if not line.startswith("#"):
                     vcf_variants.append(vcf_variant(line))
@@ -177,7 +178,7 @@ def check_hgvs_allele_vs_vcf_ng(gene, reference, ref_seq_id, alleles, version):
             print(f"Non equivalent variants for {allele['hgvs']}: {hgvs_var} vs {vcf_variants} ({allele['name']})")
 
 
-def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
+def check_hgvs_allele_vs_vcf_nc(data_dir, gene, reference, ref_seq_id, alleles, version):
     print(f"Checking consistency between NC variants and NC vcf for {ref_seq_id} ...")
     for allele in alleles:
         try:
@@ -188,7 +189,7 @@ def check_hgvs_allele_vs_vcf_nc(gene, reference, ref_seq_id, alleles, version):
 
         vcf_variants = []
         try:
-            file = open(f"data/pharmvar-{version}/{gene}/GRCh38/{allele['name'].replace('*', '_')}.vcf", encoding="utf-8")
+            file = open(Path(data_dir, f"pharmvar-{version}", gene, "GRCh38", f"{allele['name'].replace('*', '_')}.vcf"), encoding="utf-8")
             for line in file:
                 if not line.startswith("#"):
                     vcf_variants.append(vcf_variant(line))
@@ -246,6 +247,7 @@ def main():
     parser.add_argument("--nc-vs-ng", help="Check NC variants vs. NG variants", action="store_true")
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
+    parser.add_argument("--data-dir", help="Data directory", default="./data")
     parser.add_argument("--version", help="Specify PharmVar version")
 
     args = parser.parse_args()
@@ -262,20 +264,21 @@ def main():
     nc_ref_seq_id = gene_info["nc_ref_seq_id"]
     ng_ref_seq_id = gene_info["ng_ref_seq_id"]
 
+
     print("Loading reference data ...")
-    with open(f"data/{nc_ref_seq_id}.fasta", encoding="utf-8") as file:
+    with open(Path(args.data_dir, f"{nc_ref_seq_id}.fasta"), encoding="utf-8") as file:
         nc_reference = fasta_sequence(file.readlines())
 
-    with open(f"data/{ng_ref_seq_id}.fasta", encoding="utf-8") as file:
+    with open(Path(args.data_dir, f"{ng_ref_seq_id}.fasta"), encoding="utf-8") as file:
         ng_reference = fasta_sequence(file.readlines())
 
     cache = not args.disable_cache
     print("Retrieving variant data ...")
-    nc_variants = get_variants(args.gene, nc_ref_seq_id, args.version, cache)
-    ng_variants = get_variants(args.gene, ng_ref_seq_id, args.version, cache)
+    nc_variants = get_variants(args.data_dir, args.gene, nc_ref_seq_id, args.version, cache)
+    ng_variants = get_variants(args.data_dir, args.gene, ng_ref_seq_id, args.version, cache)
     print("Retrieving allele data ...")
-    nc_alleles = get_alleles(args.gene, nc_ref_seq_id, args.version, cache)
-    ng_alleles = get_alleles(args.gene, ng_ref_seq_id, args.version, cache)
+    nc_alleles = get_alleles(args.data_dir, args.gene, nc_ref_seq_id, args.version, cache)
+    ng_alleles = get_alleles(args.data_dir, args.gene, ng_ref_seq_id, args.version, cache)
 
     if args.alleles_vs_variants or args.all or args.local:
         check_alleles_vs_variants(nc_alleles, nc_variants, nc_ref_seq_id)
@@ -301,10 +304,10 @@ def main():
     if args.hgvs or args.all or args.local:
         check_hgvs_allele_vs_variant_list(ng_reference, ng_ref_seq_id, ng_alleles)
     if args.fasta or args.all or args.local:
-        check_hgvs_allele_vs_fasta(ng_reference, ng_ref_seq_id, ng_alleles, args.gene, args.version)
+        check_hgvs_allele_vs_fasta(args.data_dir, ng_reference, ng_ref_seq_id, ng_alleles, args.gene, args.version)
     if args.vcf or args.all or args.local:
-        check_hgvs_allele_vs_vcf_nc(args.gene, nc_reference, nc_ref_seq_id, nc_alleles, args.version)
-        check_hgvs_allele_vs_vcf_ng(args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
+        check_hgvs_allele_vs_vcf_nc(args.data_dir, args.gene, nc_reference, nc_ref_seq_id, nc_alleles, args.version)
+        check_hgvs_allele_vs_vcf_ng(args.data_dir, args.gene, ng_reference, ng_ref_seq_id, ng_alleles, args.version)
 
     if args.nc_vs_ng or args.all or args.local:
         check_nc_vs_ng(nc_reference, ng_reference, nc_alleles, ng_alleles, gene_info["nc_mapping"])
