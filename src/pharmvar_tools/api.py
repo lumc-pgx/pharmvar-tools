@@ -33,6 +33,7 @@ def _to_variants(data, ref_seq_id=""):
     return variants
 
 
+# TODO: specifying a future version causes problems
 def _cache_requests(url, params, cache, path):
     if cache:
         try:
