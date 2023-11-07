@@ -122,8 +122,7 @@ def select_context(equivalent, containment, overlap, context):
     return equivalent.subgraph(nodes), containment.subgraph(nodes), overlap.subgraph(nodes)
 
 
-def simplify(relations, context=None):
-    equivalent, containment, overlap, nodes = build_graphs(relations)
+def simplify(equivalent, containment, overlap, context=None):
     equivalent, containment, overlap = contract_equivalent(equivalent, containment, overlap)
     containment = nx.transitive_reduction(containment)
     overlap = overlap_without_common_ancestor(containment, overlap)
@@ -163,6 +162,7 @@ def main():
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
+    parser.add_argument("--disable-simplify", help="Disable simplification of relations", action="store_true")
     parser.add_argument("--context", nargs='*', help="List of contextual nodes", default=[])
     parser.add_argument("--text", help="Plain text output", action="store_true")
     parser.add_argument("--data-dir", help="Data directory", default="./data")
@@ -184,13 +184,16 @@ def main():
         ref_seq_id = gene_info["nc_ref_seq_id"]
 
     config_nodes = config.get_nodes(args.data_dir, args.gene, args.version, not args.disable_cache, ref_seq_id)
-    relations, nodes = prepare4export(*simplify(read_relations(), args.context), config_nodes, args.context)
+    equivalent, containment, overlap = build_graphs(read_relations())
+    if not args.disable_simplify:
+        equivalent, containment, overlap = simplify(equivalent, containment, overlap, args.context)
+    edges, dot_nodes = prepare4export(equivalent, containment, overlap, config_nodes, args.context)
 
     if args.text:
-        for lhs, rhs, value in relations:
+        for lhs, rhs, value in edges:
             print(f"{lhs} {rhs} {value}")
     else:
-        write_dot(relations, nodes)
+        write_dot(edges, dot_nodes)
 
 
 if __name__ == "__main__":
