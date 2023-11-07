@@ -10,14 +10,7 @@ from . import config
 
 
 def read_relations(file=sys.stdin):
-    relations = []
-    for line in file.readlines():
-        lhs, rhs, value, *remainder = line.split()
-        homo = 0
-        if len(remainder) >= 1:
-            homo = int(remainder[0])
-        relations.append((lhs, rhs, value, homo))
-    return relations
+    return [line.split() for line in file.readlines()]
 
 
 def dot_edge(lhs, rhs, value):
@@ -55,12 +48,8 @@ def build_graphs(relations):
     equivalent = nx.Graph()
     containment = nx.DiGraph()
     overlap = nx.Graph()
-    nodes = {}
     for relation in relations:
-        lhs, rhs, value, homo = relation
-        # Assume the homozygous node is RHS
-        if homo:
-            nodes.update({rhs: {"peripheries": 2}})
+        lhs, rhs, value = relation
         if value == Relation.EQUIVALENT.value:
             equivalent.add_edge(lhs, rhs)
         elif value == Relation.IS_CONTAINED.value:
@@ -71,7 +60,7 @@ def build_graphs(relations):
             overlap.add_edge(lhs, rhs)
         elif value != Relation.DISJOINT.value:
             raise ValueError(f"unknown relation: {value}")
-    return equivalent, containment, overlap, nodes
+    return equivalent, containment, overlap
 
 
 def contract_equivalent(equivalent, containment, overlap):
@@ -143,7 +132,7 @@ def simplify(relations, context=None):
     if context:
         equivalent, containment, overlap = select_context(equivalent, containment, overlap, context)
 
-    return equivalent, containment, overlap, nodes
+    return equivalent, containment, overlap
 
 
 def export_relations(graph, value):
@@ -153,21 +142,15 @@ def export_relations(graph, value):
     return relations
 
 
-def prepare4export(equivalent, containment, overlap, homo_nodes, config_nodes, context):
+def prepare4export(equivalent, containment, overlap, nodes, context):
     for node in context:
-        if node not in config_nodes:
-            config_nodes[node] = {"shape": "box"}
-
-    for node in homo_nodes:
-        if node not in config_nodes:
-            config_nodes[node] = homo_nodes[node]
-        else:
-            config_nodes[node].update(homo_nodes[node])
+        if node not in nodes:
+            nodes[node] = {"shape": "box"}
 
     return (export_relations(equivalent, Relation.EQUIVALENT.value) +
             export_relations(containment, Relation.IS_CONTAINED.value) +
             export_relations(overlap, Relation.OVERLAP.value),
-            {node: config_nodes[node] for node in config_nodes if node in
+            {node: nodes[node] for node in nodes if node in
                 list(equivalent.nodes()) +
                 list(containment.nodes()) +
                 list(overlap.nodes()) +
