@@ -35,12 +35,12 @@ def dot_node(label, attributes):
     return f'"{label}" [{",".join([key + "=" + quote(value) for key, value in attributes.items()])}];'
 
 
-def write_dot(relations, nodes=None, file=sys.stdout):
+def write_dot(edges, nodes=None, file=sys.stdout):
     print("digraph {", file=file)
     if not nodes:
         nodes = {}
     print("\n".join([dot_node(key, value) for key, value in nodes.items()]), file=file)
-    print("\n".join([dot_edge(*relation) for relation in relations]), file=file)
+    print("\n".join([dot_edge(*edge) for edge in edges]), file=file)
     print("}", file=file)
 
 
