@@ -36,12 +36,14 @@ def dot_node(label, attributes):
     return f'"{label}" [{", ".join([key + "=" + quote(value) for key, value in attributes.items()])}];'
 
 
-def write_dot(edges, nodes=None, file=sys.stdout):
+def write_dot(edges, nodes=None, sinks=None, file=sys.stdout):
     print("digraph {", file=file)
     if not nodes:
         nodes = {}
     print("\n".join([dot_node(key, value) for key, value in nodes.items()]), file=file)
     print("\n".join([dot_edge(*edge) for edge in edges]), file=file)
+    if sinks:
+        print(f'{{rank="sink"; {"; ".join([quote(sink) for sink in sinks])}}}', file=file)
     print("}", file=file)
 
 
@@ -194,7 +196,7 @@ def main():
         for lhs, rhs, value in edges:
             print(f"{lhs} {rhs} {value}")
     else:
-        write_dot(edges, dot_nodes)
+        write_dot(edges, dot_nodes, args.context)
 
 
 if __name__ == "__main__":
