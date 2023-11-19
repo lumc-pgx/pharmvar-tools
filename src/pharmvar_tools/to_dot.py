@@ -28,11 +28,12 @@ def dot_edge(lhs, rhs, value):
         raise ValueError(f"unknown relation: {value}")
 
 
-def dot_node(label, attributes):
-    def quote(value):
-        return f'"{value}"'
+def quote(value):
+    return f'"{value}"'
 
-    return f'"{label}" [{",".join([key + "=" + quote(value) for key, value in attributes.items()])}];'
+
+def dot_node(label, attributes):
+    return f'"{label}" [{", ".join([key + "=" + quote(value) for key, value in attributes.items()])}];'
 
 
 def write_dot(edges, nodes=None, file=sys.stdout):
