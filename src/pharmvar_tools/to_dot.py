@@ -37,14 +37,23 @@ def dot_node(label, attributes):
 
 
 def write_dot(edges, nodes=None, sinks=None, file=sys.stdout):
-    print("digraph {", file=file)
+    dot = create_dot(edges, nodes, sinks)
+    print(dot, file=file)
+
+
+def create_dot(edges, nodes=None, sinks=None):
+    dot = "digraph {\n"
     if not nodes:
         nodes = {}
-    print("\n".join([dot_node(key, value) for key, value in nodes.items()]), file=file)
-    print("\n".join([dot_edge(*edge) for edge in edges]), file=file)
+    dot += "\n".join([dot_node(key, value) for key, value in nodes.items()])
+    dot += "\n"
+    dot += "\n".join([dot_edge(*edge) for edge in edges])
+    dot += "\n"
     if sinks:
-        print(f'{{rank="sink"; {"; ".join([quote(sink) for sink in sinks])}}}', file=file)
-    print("}", file=file)
+        dot += f'{{rank="sink"; {"; ".join([quote(sink) for sink in sinks])}}}\n'
+    dot += "}\n"
+
+    return dot
 
 
 def build_graphs(relations):
