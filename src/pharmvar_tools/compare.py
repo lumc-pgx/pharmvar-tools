@@ -1,17 +1,18 @@
 import argparse
 from itertools import combinations
 from multiprocessing import Pool
+import os
 from pathlib import Path
 import sys
 
 from algebra import Relation
-from algebra.relations.supremal_based import compare, find_supremal, spanning_variant
+from algebra.relations.supremal_based import compare
 from algebra.utils import fasta_sequence
-from algebra.variants import parse_hgvs, patch
+from algebra.variants import parse_spdi
 
 from .api import get_alleles, get_variants, get_version
-from .check import allele_from_variants
 from .config import get_gene
+from .supremals import read_supremals
 
 
 def eprint(*args, **kwargs):
@@ -35,6 +36,7 @@ def main():
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version")
+    parser.add_argument("--supremals", help="File with supremals to operate on")
     parser.add_argument("--cores", type=int, help="Specify number of cores to run on", default=None)
     parser.add_argument("--data-dir", help="Data directory", default="./data")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
@@ -60,22 +62,33 @@ def main():
     pv_variants = get_variants(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
     pv_alleles = get_alleles(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
 
+    if args.supremals:
+        supremals_file = args.supremals
+    else:
+        supremals_file = f"{args.data_dir}/pharmvar-{args.version}_{args.gene}_{ref_seq_id}_supremals.txt"
+    if not os.path.isfile(supremals_file):
+        raise ValueError(f"Supremals file {supremals_file} does not exist")
+
+    supremals = read_supremals(supremals_file)
+
     alleles = {}
     for allele in pv_alleles:
         try:
-            allele_variants = allele_from_variants(reference, allele["variants"])
-            observed = patch(reference, allele_variants)
-            spanning = spanning_variant(reference, observed, allele_variants)
-            supremal, *_ = find_supremal(reference, spanning)
-            alleles[allele["name"]] = supremal
+            try:
+                supremal = supremals[allele["name"]]
+            except KeyError:
+                continue
+            alleles[allele["name"]] = parse_spdi(supremal)[0]
         except ValueError as e:
             eprint(f"ERROR: allele {allele['name']} - {e}")
 
     for variant in pv_variants:
         try:
-            allele = parse_hgvs(variant["hgvs"], reference)
-            supremal, *_ = find_supremal(reference, allele[0])
-            alleles[f"variant_{variant['id']}"] = supremal
+            try:
+                supremal = supremals[f"variant_{variant['id']}"]
+            except KeyError:
+                continue
+            alleles[f"variant_{variant['id']}"] = parse_spdi(supremal)[0]
         except ValueError as e:
             eprint(f"ERROR: variant {variant['hgvs']} - {e}")
 
