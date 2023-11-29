@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pharmvar_tools"
-version = "0.3.2"
+version = "0.4.0"
 authors = [
   { name="Mark Santcroos", email="m.a.santcroos@lumc.nl" },
   { name="Jonathan K. Vis", email="j.k.vis@lumc.nl" },
