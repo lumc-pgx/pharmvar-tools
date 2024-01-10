@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import sys
 
-from algebra.lcs import supremal
+from algebra.lcs import lcs_graph
 from algebra.utils import fasta_sequence
 from algebra.variants import parse_hgvs
 
@@ -30,8 +30,8 @@ def worker(idx):
     except ValueError:
         print(f"parsing failed for {worker_pv_alleles[idx]['name']}")
         return idx, None
-    supremal_variant, *_ = supremal(worker_reference, variants)
-    return idx, supremal_variant
+    graph = lcs_graph(worker_reference, variants)
+    return idx, graph.supremal
 
 
 def eprint(*args, **kwargs):
@@ -87,9 +87,9 @@ def main():
 
     print("Calculating supremals for pharmvar variants ...")
     for allele in pv_variants:
-        sup, *_ = supremal(reference, parse_hgvs(allele["hgvs"], reference))
-        if sup is not None:
-            alleles[f"variant_{allele['id']}"] = sup.to_spdi()
+        graph = lcs_graph(reference, parse_hgvs(allele["hgvs"], reference))
+        if graph.supremal is not None:
+            alleles[f"variant_{allele['id']}"] = graph.supremal.to_spdi()
 
     with open(f"{supremals_file}", "w", encoding="utf-8") as file:
         json.dump(alleles, file)
