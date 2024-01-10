@@ -6,13 +6,13 @@ from pathlib import Path
 import sys
 
 from algebra import Relation
-from algebra.relations.supremal_based import compare
+from algebra.relations.graph_based import compare
 from algebra.utils import fasta_sequence
 from algebra.variants import parse_spdi
 
 from .api import get_alleles, get_variants, get_version
 from .config import get_gene
-from .supremals import read_supremals
+from .lcsgraphs import read_lcsgraphs
 
 
 def eprint(*args, **kwargs):
@@ -36,7 +36,7 @@ def main():
     parser.add_argument("--gene", help="Gene to operate on", required=True)
     parser.add_argument("--reference", help="Reference to operate on (default: %(default)s)", choices=["NG", "NC"], default="NG")
     parser.add_argument("--version", help="Specify PharmVar version")
-    parser.add_argument("--supremals", help="File with supremals to operate on")
+    parser.add_argument("--lcsgraphs", help="File with LCS graphs to operate on")
     parser.add_argument("--cores", type=int, help="Specify number of cores to run on", default=None)
     parser.add_argument("--data-dir", help="Data directory", default="./data")
     parser.add_argument("--disable-cache", help="Disable read and write from cache", action="store_true")
@@ -62,33 +62,33 @@ def main():
     pv_variants = get_variants(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
     pv_alleles = get_alleles(args.data_dir, args.gene, ref_seq_id, args.version, not args.disable_cache)
 
-    if args.supremals:
-        supremals_file = args.supremals
+    if args.lcsgraphs:
+        lcsgraphs_file = args.lcsgraphs
     else:
-        supremals_file = f"{args.data_dir}/pharmvar-{args.version}_{args.gene}_{ref_seq_id}_supremals.txt"
-    if not os.path.isfile(supremals_file):
-        raise ValueError(f"Supremals file {supremals_file} does not exist")
+        lcsgraphs_file = f"{args.data_dir}/pharmvar-{args.version}_{args.gene}_{ref_seq_id}_lcsgraphs.txt"
+    if not os.path.isfile(lcsgraphs_file):
+        raise ValueError(f"LCS graphs file {lcsgraphs_file} does not exist")
 
-    supremals = read_supremals(supremals_file)
+    lcsgraphs = read_lcsgraphs(lcsgraphs_file)
 
     alleles = {}
     for allele in pv_alleles:
         try:
             try:
-                supremal = supremals[allele["name"]]
+                graph = lcsgraphs[allele["name"]]
             except KeyError:
                 continue
-            alleles[allele["name"]] = parse_spdi(supremal)[0]
+            alleles[allele["name"]] = graph
         except ValueError as e:
             eprint(f"ERROR: allele {allele['name']} - {e}")
 
     for variant in pv_variants:
         try:
             try:
-                supremal = supremals[f"variant_{variant['id']}"]
+                graph = lcsgraphs[f"variant_{variant['id']}"]
             except KeyError:
                 continue
-            alleles[f"variant_{variant['id']}"] = parse_spdi(supremal)[0]
+            alleles[f"variant_{variant['id']}"] = graph
         except ValueError as e:
             eprint(f"ERROR: variant {variant['hgvs']} - {e}")
 
